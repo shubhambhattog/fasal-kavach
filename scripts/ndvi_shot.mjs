@@ -1,0 +1,10 @@
+import { chromium } from 'playwright-core'
+const browser = await chromium.launch({ channel: 'chrome' })
+const page = await browser.newPage({ viewport: { width: 1440, height: 900 } })
+page.on('pageerror', (e) => console.log('PAGE ERROR', e.message))
+await page.addInitScript(() => localStorage.setItem('fasal-kavach.profile.v1', JSON.stringify({ lat: 20.0868, lon: 74.1278, place: 'Niphad, Nashik, Maharashtra', crop: 'onion', sowing_date: '2026-09-15', language: 'mr' })))
+await page.goto('http://localhost:8000/', { waitUntil: 'networkidle' })
+await page.getByRole('button', { name: 'Crop vigour (NDVI)' }).click()
+await page.waitForTimeout(9000)
+await page.screenshot({ path: 'shots/ndvi.png', clip: { x: 0, y: 0, width: 1440, height: 760 } })
+await browser.close()

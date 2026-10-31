@@ -1,6 +1,8 @@
 """HTTP API and static frontend."""
 
+import asyncio
 import json
+import time
 from datetime import date, timedelta
 
 from fastapi import FastAPI, File, Form, HTTPException, UploadFile
@@ -8,13 +10,13 @@ from fastapi.responses import FileResponse, JSONResponse, Response, StreamingRes
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field as PField
 
-from . import agent, voice
+from . import agent, engine, tools, voice
 from .agent import LANGUAGES, LLMUnavailable
 from .agronomy import CROPS, find_crop
 from .config import settings
 from .evidence import Field
 from .http import SourceError
-from .sources import geo
+from .sources import geo, satellite
 
 app = FastAPI(title="Fasal Kavach", version="0.1.0")
 
@@ -105,6 +107,48 @@ async def advise(body: AdviseIn):
             yield f"event: error\ndata: {json.dumps({'event': 'error', 'message': f'internal error ({type(e).__name__})'})}\n\n"
 
     return StreamingResponse(stream(), media_type="text/event-stream", headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"})
+
+
+class RiskIn(BaseModel):
+    lat: float = PField(ge=-90, le=90)
+    lon: float = PField(ge=-180, le=180)
+    crop: str = PField(min_length=2, max_length=40)
+    sowing_date: date | None = None
+
+
+SCAN_TOOLS = ["get_weather_forecast", "get_crop_stage", "get_water_balance", "get_crop_health", "get_disaster_alerts"]
+
+
+@app.post("/api/risk")
+async def risk_scan(body: RiskIn):
+    """Engine-only risk scan for a watched field: live data + deterministic rules, no LLM.
+    Cheap enough to run for every field in an FPO's list."""
+    if not geo.in_india_bbox(body.lat, body.lon):
+        problem(422, "outside_india", "This point is outside India.")
+    crop = find_crop(body.crop)
+    today = date.today()
+    field = Field(body.lat, body.lon, crop.key if crop else body.crop, body.sowing_date, "en")
+    ctx = tools.Context(field, crop, engine.stage_for(crop, body.sowing_date, today), today)
+    await asyncio.gather(*(tools.run_tool(ctx, t, {}) for t in SCAN_TOOLS))
+    signals = engine.assess(ctx.evidence, crop, ctx.stage)
+    return {
+        "signals": [s.to_dict() for s in signals],
+        "stage": ctx.stage.__dict__ if ctx.stage else None,
+        "unavailable": sorted({r.tool for r in ctx.evidence.results if r.status == "unavailable"}),
+        "checked_at": time.time(),
+    }
+
+
+@app.get("/api/ndvi-map")
+async def ndvi_map(lat: float, lon: float):
+    if not geo.in_india_bbox(lat, lon):
+        problem(422, "outside_india", "This point is outside India.")
+    try:
+        return await satellite.ndvi_map(Field(lat, lon, "", None, "en"))
+    except SourceError as e:
+        problem(503, "ndvi_unavailable", f"Satellite view unavailable: {e.message}")
+    except TimeoutError:
+        problem(504, "ndvi_timeout", "Satellite imagery took too long to load.")
 
 
 @app.post("/api/transcribe")

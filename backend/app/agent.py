@@ -223,9 +223,10 @@ async def run(req: Request, today: date | None = None) -> AsyncIterator[dict]:
         missing = [t for t in DEFAULT_PLAN if t not in have]
         for name in missing:
             yield _event("tool_start", tool=name, args={}, id=None, fallback=True)
+        t0 = time.time()
         results = await asyncio.gather(*(tools.run_tool(ctx, t, {}) for t in missing))
         for name, r in zip(missing, results):
-            yield _event("tool_end", tool=name, id=None, status=r.status, ms=0, providers=r.providers_tried, notes=r.notes,
+            yield _event("tool_end", tool=name, id=None, status=r.status, ms=round((time.time() - t0) * 1000), providers=r.providers_tried, notes=r.notes,
                          n_facts=len(r.facts), data=r.to_ui())
         signals = engine.assess(ctx.evidence, ctx.crop, ctx.stage)
         advisory = fallback_advisory(signals, ctx, reason)

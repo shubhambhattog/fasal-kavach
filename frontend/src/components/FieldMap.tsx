@@ -1,7 +1,7 @@
 import * as maplibregl from 'maplibre-gl'
 import { useEffect, useRef, useState } from 'react'
 import workerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?url'
-import { searchPlaces } from '../api'
+import { ndviMap, searchPlaces, type NdviMap } from '../api'
 
 // MapLibre 6 loads its worker as a separate module; Vite must emit it as an asset.
 maplibregl.setWorkerUrl(workerUrl)
@@ -32,6 +32,7 @@ const STYLE: maplibregl.StyleSpecification = {
 const INDIA: [number, number] = [78.9, 22.5]
 
 interface Props {
+  autoNdvi?: boolean
   lat: number | null
   lon: number | null
   placeholder: string
@@ -39,7 +40,7 @@ interface Props {
   onPick: (lat: number, lon: number) => void
 }
 
-export function FieldMap({ lat, lon, placeholder, hint, onPick }: Props) {
+export function FieldMap({ lat, lon, placeholder, hint, onPick, autoNdvi }: Props) {
   const el = useRef<HTMLDivElement>(null)
   const map = useRef<maplibregl.Map | null>(null)
   const marker = useRef<maplibregl.Marker | null>(null)
@@ -49,6 +50,8 @@ export function FieldMap({ lat, lon, placeholder, hint, onPick }: Props) {
   const [results, setResults] = useState<{ name: string; lat: number; lon: number }[]>([])
   const [searchError, setSearchError] = useState('')
   const [searching, setSearching] = useState(false)
+  const [ndvi, setNdvi] = useState<{ state: 'off' | 'loading' | 'on' | 'error'; data?: NdviMap; error?: string }>({ state: 'off' })
+  const [ready, setReady] = useState(false)
 
   useEffect(() => {
     if (!el.current || map.current) return
@@ -66,6 +69,7 @@ export function FieldMap({ lat, lon, placeholder, hint, onPick }: Props) {
     // The panel's size changes as results stream in; keep the canvas matched to it.
     const ro = new ResizeObserver(() => m.resize())
     ro.observe(el.current)
+    m.on('load', () => setReady(true))
     m.on('click', (e: maplibregl.MapMouseEvent) => onPickRef.current(e.lngLat.lat, e.lngLat.lng))
     map.current = m
     return () => {
@@ -96,6 +100,40 @@ export function FieldMap({ lat, lon, placeholder, hint, onPick }: Props) {
     }
     if (m.getZoom() < 12) m.flyTo({ center: [lon, lat], zoom: 15, speed: 1.6 })
   }, [lat, lon])
+
+  // A new pin invalidates the overlay.
+  useEffect(() => {
+    setNdvi((n) => (n.state === 'off' ? n : { state: 'off' }))
+  }, [lat, lon])
+
+  // Auto-show the overlay when the parent says satellite data was just used.
+  useEffect(() => {
+    if (autoNdvi && ndvi.state === 'off') toggleNdvi()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoNdvi])
+
+  useEffect(() => {
+    const m = map.current
+    if (!m || !ready) return
+    if (m.getLayer('ndvi')) m.removeLayer('ndvi')
+    if (m.getSource('ndvi')) m.removeSource('ndvi')
+    if (ndvi.state === 'on' && ndvi.data) {
+      m.addSource('ndvi', { type: 'image', url: ndvi.data.png, coordinates: ndvi.data.corners as any })
+      m.addLayer({ id: 'ndvi', type: 'raster', source: 'ndvi', paint: { 'raster-opacity': 0.85, 'raster-resampling': 'nearest', 'raster-fade-duration': 300 } }, 'labels')
+    }
+  }, [ndvi, ready])
+
+  async function toggleNdvi() {
+    if (lat == null || lon == null) return
+    if (ndvi.state === 'on') return setNdvi({ ...ndvi, state: 'off' })
+    if (ndvi.data) return setNdvi({ ...ndvi, state: 'on' })
+    setNdvi({ state: 'loading' })
+    try {
+      setNdvi({ state: 'on', data: await ndviMap(lat, lon) })
+    } catch (err: any) {
+      setNdvi({ state: 'error', error: err.message })
+    }
+  }
 
   async function search(e: React.FormEvent) {
     e.preventDefault()
@@ -141,6 +179,31 @@ export function FieldMap({ lat, lon, placeholder, hint, onPick }: Props) {
               {r.name}
             </button>
           ))}
+        </div>
+      )}
+      {lat != null && (
+        <div className="absolute bottom-3 left-3 z-10 flex flex-col items-start gap-2">
+          {ndvi.state === 'on' && ndvi.data && (
+            <div className="rounded-[12px] border border-line-2 bg-[#101010cc] px-3 py-2 backdrop-blur-[20px]">
+              <div className="mb-1.5 h-1.5 w-[148px] rounded-full" style={{ background: 'linear-gradient(90deg,#784828,#b08450,#d6c46a,#96c45a,#4ca046,#186e32)' }} />
+              <div className="flex justify-between font-mono text-[10px] text-ink-3">
+                <span>bare</span>
+                <span>dense crop</span>
+              </div>
+              <div className="mt-1 font-mono text-[10px] text-ink-3 num">Sentinel-2 · {ndvi.data.date} · 10 m</div>
+            </div>
+          )}
+          {ndvi.state === 'error' && <div className="max-w-[240px] rounded-[10px] bg-[#101010cc] px-3 py-2 text-[11px] text-moderate backdrop-blur-[20px]">{ndvi.error}</div>}
+          <button
+            onClick={toggleNdvi}
+            aria-pressed={ndvi.state === 'on'}
+            className={`flex h-9 items-center gap-2 rounded-full border px-3.5 text-[12px] backdrop-blur-[20px] transition-colors duration-300 active:scale-[.98] ${
+              ndvi.state === 'on' ? 'border-accent/50 bg-accent/15 text-accent' : 'border-line-2 bg-[#101010b3] text-ink-2 hover:text-ink'
+            }`}
+          >
+            {ndvi.state === 'loading' ? <span className="h-3 w-3 animate-spin rounded-full border-2 border-ink-4 border-t-ink" /> : <span className="h-2 w-2 rounded-full bg-accent" />}
+            {ndvi.state === 'loading' ? 'Reading satellite…' : 'Crop vigour (NDVI)'}
+          </button>
         </div>
       )}
       {lat == null && (

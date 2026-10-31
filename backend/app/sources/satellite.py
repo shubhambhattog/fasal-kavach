@@ -162,3 +162,81 @@ async def crop_health(f: Field, lookback_days: int = 90, today: date | None = No
     notes.append("NDVI guide: below 0.2 is bare soil or very sparse cover; 0.2-0.4 sparse or young crop; 0.4-0.6 moderate; above 0.6 dense healthy canopy.")
     return ToolResult("get_crop_health", "ok" if not failed else "partial", tried, facts, notes,
                       series={"scenes": sorted(scenes, key=lambda s: s["date"]), "stac_url": src.url})
+
+
+# --- NDVI map overlay -------------------------------------------------------------------------
+
+MAP_HALF = 48  # 97×97 pixels ≈ 970 m square around the pin
+
+# NDVI colour ramp: bare soil (brown) → sparse (tan) → moderate (yellow-green) → dense (green)
+_RAMP = [(-0.1, (120, 72, 40)), (0.15, (176, 132, 80)), (0.3, (214, 196, 106)), (0.45, (150, 196, 90)), (0.6, (76, 160, 70)), (0.8, (24, 110, 50))]
+
+
+def _colour(ndvi: np.ndarray) -> np.ndarray:
+    xs = [p for p, _ in _RAMP]
+    rgb = np.stack([np.interp(ndvi, xs, [c[i] for _, c in _RAMP]) for i in range(3)], axis=-1)
+    return rgb.astype("uint8")
+
+
+def render_ndvi_map(item: dict, lon: float, lat: float) -> dict:
+    """Blocking: NDVI of a ~1 km square around the field as a transparent PNG plus its lon/lat corners."""
+    import base64
+    import io
+
+    import rasterio
+    from PIL import Image
+    from rasterio.warp import transform as warp_transform
+    from rasterio.windows import Window, from_bounds
+
+    assets = item["assets"]
+    epsg = item["properties"].get("proj:epsg") or int(str(item["properties"].get("proj:code", "")).split(":")[-1])
+    xs, ys = warp_transform("EPSG:4326", f"EPSG:{epsg}", [lon], [lat])
+    size = 2 * MAP_HALF + 1
+    with rasterio.open(assets["red"]["href"]) as ds:
+        row, col = ds.index(xs[0], ys[0])
+        win = Window(col - MAP_HALF, row - MAP_HALF, size, size)
+        red = ds.read(1, window=win, boundless=True, fill_value=0)
+        left, bottom, right, top = ds.window_bounds(win)
+    with rasterio.open(assets["nir"]["href"]) as ds:
+        nir = ds.read(1, window=win, boundless=True, fill_value=0)
+    with rasterio.open(assets["scl"]["href"]) as ds:
+        scl = ds.read(1, window=from_bounds(left, bottom, right, top, transform=ds.transform), out_shape=red.shape,
+                      boundless=True, fill_value=0, resampling=rasterio.enums.Resampling.nearest)
+    r, n = _scaled(item, assets["red"], red), _scaled(item, assets["nir"], nir)
+    with np.errstate(divide="ignore", invalid="ignore"):
+        ndvi = np.where((n + r) > 1e-6, (n - r) / (n + r), 0.0)
+    clear = (red > 0) & (nir > 0) & np.isin(scl, list(CLEAR_SCL))
+    rgba = np.zeros((*ndvi.shape, 4), dtype="uint8")
+    rgba[..., :3] = _colour(np.clip(ndvi, -0.1, 0.9))
+    rgba[..., 3] = np.where(clear, 215, 0)
+    img = Image.fromarray(rgba, "RGBA").resize((size * 4, size * 4), Image.NEAREST)  # crisp 10 m pixels
+    buf = io.BytesIO()
+    img.save(buf, "PNG", optimize=True)
+    # Corners in lon/lat, clockwise from top-left, as MapLibre's image source expects.
+    cx, cy = warp_transform(f"EPSG:{epsg}", "EPSG:4326", [left, right, right, left], [top, top, bottom, bottom])
+    return {
+        "date": item["properties"]["datetime"][:10],
+        "png": "data:image/png;base64," + base64.b64encode(buf.getvalue()).decode(),
+        "corners": [[round(x, 6), round(y, 6)] for x, y in zip(cx, cy)],
+        "clear_fraction": round(float(clear.mean()), 2),
+        "mean_ndvi": round(float(ndvi[clear].mean()), 3) if clear.any() else None,
+    }
+
+
+async def ndvi_map(f: Field, today: date | None = None) -> dict:
+    """Latest scene whose window over the field is mostly clear, rendered as an overlay. Cached 12 h."""
+    from ..cache import TTLCache
+    from ..http import cache
+
+    today = today or date.today()
+    key = TTLCache.key("ndvi-map", round(f.lat, 5), round(f.lon, 5), today.isoformat())
+    hit = cache.get(key)
+    if hit:
+        return hit[0]
+    items, _ = await _search(f, today - timedelta(days=60), today)
+    for item in [i for i in items if i["properties"].get("eo:cloud_cover", 100) <= 60][:4]:
+        out = await asyncio.wait_for(asyncio.to_thread(render_ndvi_map, item, f.lon, f.lat), timeout=settings.cog_timeout_s + 10)
+        if out["clear_fraction"] >= 0.5:
+            cache.set(key, out, 12 * 3600)
+            return out
+    raise SourceError("sentinel-2", "no clear view of this area in the last 60 days")

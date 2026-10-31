@@ -91,3 +91,17 @@ export async function speak(text: string, language: string): Promise<Blob> {
   if (!res.ok) throw await errorFrom(res)
   return res.blob()
 }
+
+export interface NdviMap {
+  date: string
+  png: string
+  corners: [number, number][]
+  clear_fraction: number
+  mean_ndvi: number | null
+}
+
+export async function ndviMap(lat: number, lon: number): Promise<NdviMap> {
+  const res = await fetch(`/api/ndvi-map?lat=${lat}&lon=${lon}`)
+  if (!res.ok) throw await errorFrom(res)
+  return res.json()
+}

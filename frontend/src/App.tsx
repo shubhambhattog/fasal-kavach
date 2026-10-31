@@ -4,6 +4,7 @@ import { AdvisoryCard } from './components/AdvisoryCard'
 import { AskBox } from './components/AskBox'
 import { ForecastPanel, MandiPanel, NdviPanel } from './components/DataPanels'
 import { FieldMap } from './components/FieldMap'
+import { FieldsPanel, type Watched } from './components/FieldsPanel'
 import { Trace } from './components/Trace'
 import { LANGUAGES, t } from './i18n'
 import type { Profile, ToolData, TraceEvent } from './types'
@@ -45,6 +46,13 @@ export default function App() {
     } catch (err: any) {
       setPlaceError(err.message)
     }
+  }
+
+  function openWatched(f: Watched) {
+    setEvents([])
+    setPlaceError('')
+    setProfile((p) => ({ ...p, lat: f.lat, lon: f.lon, crop: f.crop, sowing_date: f.sowing_date, place: f.label }))
+    window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
   async function ask(question: string) {
@@ -109,11 +117,11 @@ export default function App() {
         </header>
 
         <main className="grid gap-6 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]">
-          <section className="frame enter-rise self-start lg:sticky lg:top-6" style={{ ['--delay' as any]: '.1s', ['--rise' as any]: '40px' }}>
+          <section className="frame enter-rise self-start" style={{ ['--delay' as any]: '.1s', ['--rise' as any]: '40px' }}>
             <div className="card flex flex-col gap-0">
               <span className="glare" aria-hidden />
               <div className="h-[340px] p-2 sm:h-[400px]">
-                <FieldMap lat={profile.lat} lon={profile.lon} placeholder={s.searchPlaceholder} hint={s.dropPin} onPick={pick} />
+                <FieldMap autoNdvi={!!toolData.get_crop_health && toolData.get_crop_health.status !== 'unavailable'} lat={profile.lat} lon={profile.lon} placeholder={s.searchPlaceholder} hint={s.dropPin} onPick={pick} />
               </div>
               <div className="flex flex-col gap-4 p-5 pt-3">
                 <div className="flex min-h-[20px] items-center gap-2 text-[13px]">
@@ -211,6 +219,8 @@ export default function App() {
             <MandiPanel title={s.mandi} data={toolData.get_mandi_prices} />
           </div>
         )}
+
+        <FieldsPanel profile={profile} onOpen={openWatched} />
 
         <footer className="flex flex-wrap justify-between gap-3 border-t border-line pt-6 text-[12px] leading-[18px] text-ink-3">
           <span>Live data: Open-Meteo · MET Norway · NASA POWER · ESA Sentinel-2 · ISRIC SoilGrids · data.gov.in Agmarknet · GDACS · OpenStreetMap</span>
