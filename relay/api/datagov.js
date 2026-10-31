@@ -11,9 +11,13 @@ export default async function handler(req, res) {
   if (!process.env.RELAY_TOKEN || req.headers['x-relay-token'] !== process.env.RELAY_TOKEN) {
     return res.status(401).json({ error: 'unauthorised' })
   }
-  const { resource, ...query } = req.query
+  // Use the raw query string: Vercel's req.query parses keys like filters[state.keyword] into
+  // nested objects, which would mangle data.gov.in's filter syntax.
+  const params = new URL(req.url, 'http://relay.local').searchParams
+  const resource = params.get('resource')
   if (!ALLOWED.has(resource)) return res.status(400).json({ error: 'resource not allowed' })
-  const url = UPSTREAM + resource + '?' + new URLSearchParams(query).toString()
+  params.delete('resource')
+  const url = UPSTREAM + resource + '?' + params.toString()
   try {
     const upstream = await fetch(url, { signal: AbortSignal.timeout(10000), headers: { 'User-Agent': 'FasalKavach-relay/0.1' } })
     const body = await upstream.text()
