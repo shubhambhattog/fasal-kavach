@@ -110,7 +110,8 @@ Prueger 2015.
 - **Frontend:** React 19, TypeScript, Vite, Tailwind CSS 4, MapLibre GL (Esri imagery), Recharts
 - **Models:** `gemini-3.8-flash` (agent), `gemini-3.5-transcribe` (speech in), `gemini-3.8-flash-tts`
   (speech out); `gemini-3.5-flash-lite` for development
-- **Deploy:** one Docker container (FastAPI serves the built React app) on Render ([`render.yaml`](render.yaml))
+- **Deploy:** one Docker container (FastAPI serves the built React app) on Render ([`render.yaml`](render.yaml)),
+  plus a Mumbai relay on Vercel for data.gov.in, which refuses foreign IPs ([`relay/`](relay/))
 
 ## Run it
 
@@ -156,7 +157,9 @@ we don't claim one.
 
 | Tried | Result | Fix |
 |---|---|---|
-| Open-Meteo as the only forecast source | HTTP 429, daily per-IP limit, on day 0 | MET Norway fallback, with Hargreaves ET0 computed for it |
+| Open-Meteo as the only forecast source | HTTP 429, daily per-IP limit, on day 0 and again from Render's shared IP | MET Norway fallback, with Hargreaves ET0 computed for it |
+| Calling data.gov.in from the hosted app | Every connection refused from Render (Singapore); works from India | A ~30-line relay in Vercel's Mumbai region, allow-listed and secret-protected ([`relay/`](relay/)) |
+| `python:3.12-slim` with rasterio | Every Sentinel-2 read failed inside the container | rasterio's GDAL needs `libexpat1`; caught by smoke-testing the image before deploying |
 | SoilGrids as the only soil source | HTTP 503 for most of the build | 6 s timeout, then fall back to soil moisture and disclose it |
 | Applying the STAC asset's −0.1 reflectance offset | NDVI of 1.4-3.2 (impossible) | Earth Search has already removed ESA's offset (`earthsearch:boa_offset_applied`); apply it only when that flag is false. NDVI is now 0.60-0.72 |
 | Treating every day-of-month in the evidence as a "grounded" number | An invented "30 °C" passed because 30 Oct was a date | Strip dates and day counts (English, Hindi and Marathi months) before checking; auto-allow only integers ≤ 3 |

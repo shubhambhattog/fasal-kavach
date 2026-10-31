@@ -95,6 +95,22 @@ The production build is served by FastAPI from `/`, so there's **one container a
 
 ## Deployment
 
-One `Dockerfile` (a multi-stage build: node builds the frontend, python:3.12-slim runs uvicorn) on
-**Hugging Face Spaces (Docker SDK)**, with Render as a backup. Secrets come from Space secrets
-(`GEMINI_API_KEY`, `DATA_GOV_API_KEY`).
+```mermaid
+flowchart LR
+  B[Browser] --> R["Render web service (Singapore)<br/>Docker: FastAPI + built React app"]
+  R --> P[Public APIs: Open-Meteo, MET Norway, NASA POWER, Sentinel-2 COGs, GDACS, Nominatim, Gemini]
+  R -- "x-relay-token" --> V["Vercel function, Mumbai (bom1)<br/>relay/api/datagov.js"]
+  V --> D[api.data.gov.in mandi prices]
+```
+
+One `Dockerfile` (a multi-stage build: node builds the frontend, python:3.12-slim with libexpat1
+runs uvicorn) on **Render's free plan** ([`render.yaml`](../render.yaml)), auto-deployed from
+`main`. Hugging Face Docker Spaces were the first choice but now need a paid plan.
+
+**data.gov.in refuses connections from foreign datacenters** ("All connection attempts failed" from
+Render Singapore, while it works from India). So the mandi source calls a ~30-line relay pinned to
+Vercel's Mumbai region (`relay/`). It forwards only the allow-listed mandi dataset, requires a
+shared secret, and the advisory still cites the official data.gov.in URL. Without the relay env
+vars set (e.g. running locally in India), the app calls data.gov.in directly.
+
+Secrets are Render env vars: `GEMINI_API_KEY`, `DATA_GOV_RELAY_URL`, `DATA_GOV_RELAY_TOKEN`.

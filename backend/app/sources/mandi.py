@@ -43,8 +43,11 @@ async def _page(params: dict, offset: int, limit: int):
                                  headers={"x-relay-token": settings.data_gov_relay_token})
             res.url = display_url(RESOURCE, p)  # cite the official source, not the relay
             return res
-        except SourceError:
-            pass
+        except SourceError as relay_err:
+            try:
+                return await get_json("data.gov.in", RESOURCE, p, ttl_s=3 * 3600, timeout_s=12, validate=validate)
+            except SourceError as direct_err:
+                raise SourceError("data.gov.in", f"Mumbai relay: {relay_err.message}; direct: {direct_err.message}")
     return await get_json("data.gov.in", RESOURCE, p, ttl_s=3 * 3600, timeout_s=12, validate=validate)
 
 

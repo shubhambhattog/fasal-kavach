@@ -12,8 +12,12 @@ Append-only. Each entry: date, decision, why, alternatives rejected.
 - **2026-10-31: Model writes, code checks.** A gate checks the model against a deterministic
   engine, from loadout LEARNINGS (Oct 2026 Orchestrate: a decorative LLM cost points; the winning
   gated agent first-passed 503 cases).
-- **2026-10-31: One container** (FastAPI serves the built React app) on HF Spaces. One URL, no
-  CORS, no cold-start pairing between two hosts.
+- **2026-10-31: One container** (FastAPI serves the built React app). One URL, no CORS, no
+  cold-start pairing between two hosts. **2026-11-01: hosted on Render** (free Docker web
+  service, Singapore), because HF Docker Spaces now need PRO.
+- **2026-11-01: Mumbai relay for data.gov.in.** The owner chose a Vercel `bom1` function over
+  leaving mandi prices unavailable on the live site. It's allow-listed to one dataset and
+  secret-protected, and citations still point at data.gov.in.
 - **2026-10-31: Voice through Gemini** (transcribe and TTS models on the same key), with browser
   speech as the fallback. Free, one key, good Indic quality. Sarvam and Bhashini need extra signup.
 - **2026-10-31: Location and crop come from the profile, not model arguments.** This stops the
@@ -45,3 +49,5 @@ Append-only. Each entry: date, decision, why, alternatives rejected.
 | 12 | Eval v1: model not told the published thresholds | 4/12 first-pass; 6 of 8 failures were `risk_agreement` (the model under-stated a risk) | The model couldn't know where "moderate" starts | v2 adds IMD/FAO-56 reference thresholds to tool notes; the engine's verdicts stay private (see EVAL.md) |
 | 13 | `python:3.12-slim` Docker image with the rasterio wheel | Every Sentinel-2 read failed in the container; the tool reported "10 scene reads failed" | The bundled GDAL needs `libexpat.so.1`, which the slim image lacks; the ImportError was swallowed per scene | `apt-get install libexpat1`; failure notes now include the exception type. Found by smoke-testing the image before deploying |
 | 14 | Engine flagged water need for rice 21 days and soybean 1 day before harvest | The gate forced the model to state a risk the model had rightly left out (eval v2) | Irrigation is normally stopped 2-3 weeks before harvest | Final dry-down rule (≤ 21 days to harvest: low); a gate disagreement exposed an *engine* bug, not a model one |
+| 15 | Calling data.gov.in from the hosted app (Render, Singapore) | `ConnectError: All connection attempts failed` on every call; mandi prices unavailable on the live URL | data.gov.in refuses foreign datacenter IPs (works from India) | Relay in Vercel's Mumbai region, verified egress `x-relay-region: bom1` |
+| 16 | Open-Meteo from shared hosting IPs | `429 Daily API request limit exceeded` (laptop on day 0, then Render) | Free tier is limited per IP and the IP is shared | MET Norway fallback for the forecast, NASA POWER for soil wetness; both disclosed |
