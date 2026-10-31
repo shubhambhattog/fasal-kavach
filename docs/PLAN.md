@@ -9,7 +9,7 @@ Times are targets in IST, starting 2026-10-31 23:50.
 - [x] `git init`, private GitHub repo, first commit
 - [x] Backend scaffold (uv, FastAPI, config, cache, http client, `/api/health`)
 - [x] Frontend scaffold (Vite, React, TS, Tailwind) served by FastAPI
-- [ ] Dockerfile builds and runs locally
+- [x] Dockerfile builds and runs locally
 
 ## M1: Live data tools (to 06:00)
 - [x] geo: search, reverse, India land check
@@ -56,11 +56,11 @@ Times are targets in IST, starting 2026-10-31 23:50.
 
 ## M7: Submission (to 23:00)
 - [x] README: problem, solution, architecture diagram, setup, data sources, what failed first, limits
-- [ ] Pitch deck (6 slides)
-- [ ] Demo script; the owner records a 2-3 min video
+- [x] Pitch deck (6 slides): https://gamma.app/docs/5ea2xftoiysvl5r
+- [x] Demo script (docs/DEMO.md); the owner records a 2-3 min video
 - [ ] Make the repo public; fill in the submission form
 
 ## Owner actions (only Shubham can do these)
-- [ ] data.gov.in personal API key (free, instant at data.gov.in → sign up → My Account → API key)
-- [ ] Hugging Face account and write token (for the Space)
+- [ ] (optional) data.gov.in personal API key; the sample key works but pages 10 records at a time
+- [x] Hosting: Render (live) + Vercel Mumbai relay
 - [ ] Record the demo video; submit the form
