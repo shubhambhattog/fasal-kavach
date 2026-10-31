@@ -90,6 +90,7 @@ async def get_json(
     method: str = "GET",
     json_body: Any = None,
     validate=None,
+    headers: dict | None = None,  # not part of the cache key; never put data-changing values here
 ) -> Fetched:
     """Fetch JSON with cache and breaker. `validate(data)` may raise ValueError to reject a 200 response."""
     key = TTLCache.key(provider, method, url, params, json_body)
@@ -101,7 +102,7 @@ async def get_json(
     breaker.check(provider)
     try:
         resp = await client().request(
-            method, url, params=params, json=json_body, timeout=timeout_s or settings.http_timeout_s
+            method, url, params=params, json=json_body, headers=headers, timeout=timeout_s or settings.http_timeout_s
         )
     except httpx.TimeoutException:
         breaker.fail(provider)

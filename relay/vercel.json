@@ -1,0 +1,4 @@
+{
+  "regions": ["bom1"],
+  "functions": { "api/datagov.js": { "maxDuration": 15 } }
+}

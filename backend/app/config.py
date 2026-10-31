@@ -19,6 +19,10 @@ class Settings(BaseSettings):
     # data.gov.in publishes this sample key for open APIs; it caps responses at 10 records.
     data_gov_api_key: str = "579b464db66ec23bdd000001cdd3946e44ce4aad7209ff7b23ac571b"
 
+    # Optional Indian-egress relay (relay/ on Vercel bom1): data.gov.in refuses foreign datacenter IPs.
+    data_gov_relay_url: str = ""
+    data_gov_relay_token: str = ""
+
     contact_email: str = "fasal-kavach@users.noreply.github.com"
     cache_path: Path = ROOT / "data" / "cache" / "cache.sqlite"
     frontend_dist: Path = ROOT / "frontend" / "dist"

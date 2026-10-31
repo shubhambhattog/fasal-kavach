@@ -11,7 +11,7 @@ from statistics import median
 
 from ..config import settings
 from ..evidence import Field, ToolResult, fact
-from ..http import SourceError, get_json
+from ..http import SourceError, display_url, get_json
 from . import geo
 
 RESOURCE = "https://api.data.gov.in/resource/9ef84268-d588-465a-a308-a864a43d0070"
@@ -35,6 +35,16 @@ async def _page(params: dict, offset: int, limit: int):
         if "records" not in d:
             raise ValueError(d.get("message", "no records"))
 
+    if settings.data_gov_relay_url:
+        # Hosted outside India the direct call is refused, so go through the Mumbai relay first.
+        try:
+            res = await get_json("data.gov.in (via Mumbai relay)", settings.data_gov_relay_url,
+                                 p | {"resource": RESOURCE.rsplit("/", 1)[1]}, ttl_s=3 * 3600, timeout_s=14, validate=validate,
+                                 headers={"x-relay-token": settings.data_gov_relay_token})
+            res.url = display_url(RESOURCE, p)  # cite the official source, not the relay
+            return res
+        except SourceError:
+            pass
     return await get_json("data.gov.in", RESOURCE, p, ttl_s=3 * 3600, timeout_s=12, validate=validate)
 
 
