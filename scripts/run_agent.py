@@ -26,6 +26,10 @@ async def main(a):
             print(f"  ← {ev['tool']} {ev['status']} {ev['ms']}ms facts={ev['n_facts']} {ev['notes'][:1]}")
         elif kind == "tool_start":
             print(f"  → {ev['tool']} {ev['args']}")
+        elif kind == "llm_end":
+            print(f"  LLM turn {ev['turn']} {ev['ms']}ms in={ev['tokens_in']} out={ev['tokens_out']} thought={ev['tokens_thought']}")
+        elif kind == "llm_start":
+            pass
         elif kind == "thought":
             print(f"  💭 {ev['text'][:200]!r}")
         elif kind == "gate":

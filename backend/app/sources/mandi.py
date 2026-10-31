@@ -141,9 +141,9 @@ async def prices(f: Field, commodities: tuple[str, ...], radius: str = "district
     model_view = {
         "commodity": used,
         "scope": scope,
-        "id_pattern": "mandi.<market_slug>.modal / .distance",
         "markets": [
-            {"id": f"mandi.{slug(r['market'])}", "market": r["market"], "district": r["district"], "modal": r["modal"],
+            {"price_id": f"mandi.{slug(r['market'])}.modal", "distance_id": f"mandi.{slug(r['market'])}.distance" if r.get("distance_km") is not None else None,
+             "market": r["market"], "district": r["district"], "modal": r["modal"],
              "min": r["min"], "max": r["max"], "date": r["date"], "distance_km": r.get("distance_km")}
             for r in rows[:15]
         ],

@@ -155,7 +155,14 @@ async def run(req: Request, today: date | None = None) -> AsyncIterator[dict]:
         while time.time() - started < settings.request_budget_s:
             stats["turns"] += 1
             final_only = stats["tool_calls"] >= settings.max_tool_calls
+            phase = "planning" if stats["turns"] == 1 else ("repairing" if stats["submissions"] else "writing")
+            yield _event("llm_start", turn=stats["turns"], phase=phase)
+            t_llm = time.time()
             resp = await _generate(model, contents, _config(language, final_only))
+            usage = resp.usage_metadata
+            yield _event("llm_end", turn=stats["turns"], ms=round((time.time() - t_llm) * 1000),
+                         tokens_in=getattr(usage, "prompt_token_count", None), tokens_out=getattr(usage, "candidates_token_count", None),
+                         tokens_thought=getattr(usage, "thoughts_token_count", None))
             cand = (resp.candidates or [None])[0]
             if cand is None or cand.content is None or not cand.content.parts:
                 raise LLMUnavailable("empty model response")

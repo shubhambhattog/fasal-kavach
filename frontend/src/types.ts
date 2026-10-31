@@ -63,6 +63,8 @@ export interface Stats {
 export type TraceEvent =
   | { event: 'start'; t: number; model: string; stage: any; crop_known: boolean; field: any }
   | { event: 'thought'; t: number; text: string }
+  | { event: 'llm_start'; t: number; turn: number; phase: 'planning' | 'writing' | 'repairing' }
+  | { event: 'llm_end'; t: number; turn: number; ms: number; tokens_in: number | null; tokens_out: number | null }
   | { event: 'tool_start'; t: number; tool: string; args: Record<string, unknown>; id: string | null; fallback?: boolean }
   | { event: 'tool_end'; t: number; tool: string; id: string | null; status: ToolData['status']; ms: number; providers: string[]; notes: string[]; n_facts: number; data: ToolData }
   | { event: 'gate'; t: number; ok: boolean; attempt: number; problems: { check: string; detail: string }[] }

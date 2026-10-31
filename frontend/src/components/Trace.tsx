@@ -15,9 +15,10 @@ const CHECK_LABELS: Record<string, string> = {
 
 interface Row {
   key: string
-  kind: 'tool' | 'thought' | 'gate' | 'error' | 'start'
+  kind: 'tool' | 'thought' | 'gate' | 'error' | 'start' | 'llm'
   ev: TraceEvent
   end?: Extract<TraceEvent, { event: 'tool_end' }>
+  llmEnd?: Extract<TraceEvent, { event: 'llm_end' }>
 }
 
 function rows(events: TraceEvent[]): Row[] {
@@ -31,6 +32,13 @@ function rows(events: TraceEvent[]): Row[] {
     } else if (ev.event === 'tool_end') {
       const r = open.get(`${ev.tool}:${ev.id}`)
       if (r) r.end = ev
+    } else if (ev.event === 'llm_start') {
+      const r: Row = { key: `l${i}`, kind: 'llm', ev }
+      open.set(`llm:${ev.turn}`, r)
+      out.push(r)
+    } else if (ev.event === 'llm_end') {
+      const r = open.get(`llm:${ev.turn}`)
+      if (r) r.llmEnd = ev
     } else if (ev.event === 'thought') out.push({ key: `th${i}`, kind: 'thought', ev })
     else if (ev.event === 'gate') out.push({ key: `g${i}`, kind: 'gate', ev })
     else if (ev.event === 'llm_error' || ev.event === 'error') out.push({ key: `e${i}`, kind: 'error', ev })
@@ -79,6 +87,17 @@ function TraceRow({ row }: { row: Row }) {
       <span className="text-ink-3">
         field locked · {ev.field.place || 'pin'} {ev.field.district && `· ${ev.field.district}`} · {ev.field.crop}
         {st ? ` · day ${st.das}, ${st.stage}` : ''}
+      </span>
+    )
+  }
+  if (ev.event === 'llm_start') {
+    const end = row.llmEnd
+    const label = { planning: 'Gemini plans which live data to fetch', writing: 'Gemini writes the advice from the facts', repairing: 'Gemini fixes the problems the gate found' }[ev.phase]
+    return (
+      <span className="flex min-w-0 flex-1 items-center gap-2 text-ink-2">
+        <span className={`inline-block h-1.5 w-1.5 shrink-0 rounded-sm ${end ? 'bg-ink-3' : 'animate-pulse bg-ink-4'}`} />
+        <span className="truncate">{label}</span>
+        {end && <span className="shrink-0 text-ink-4 num">{(end.ms / 1000).toFixed(1)}s</span>}
       </span>
     )
   }
