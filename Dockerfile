@@ -11,6 +11,8 @@ RUN pnpm build
 FROM python:3.12-slim
 ENV PYTHONUNBUFFERED=1 UV_COMPILE_BYTECODE=1 UV_LINK_MODE=copy
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
+# rasterio's bundled GDAL links against libexpat, which the slim image doesn't ship
+RUN apt-get update && apt-get install -y --no-install-recommends libexpat1 ca-certificates && rm -rf /var/lib/apt/lists/*
 RUN useradd -m -u 1000 app
 WORKDIR /app/backend
 COPY backend/pyproject.toml backend/uv.lock ./

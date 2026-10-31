@@ -123,10 +123,11 @@ async def crop_health(f: Field, lookback_days: int = 90, today: date | None = No
         *(asyncio.wait_for(asyncio.to_thread(read_scene, i, f.lon, f.lat), timeout=settings.cog_timeout_s + 5) for i in candidates),
         return_exceptions=True,
     )
-    scenes, failed = [], 0
+    scenes, failed, kinds = [], 0, set()
     for r in results:
         if isinstance(r, BaseException):
             failed += 1
+            kinds.add(type(r).__name__)
         else:
             scenes.append(r)
     clear = sorted([s for s in scenes if s["ndvi"] is not None], key=lambda s: s["date"])
@@ -138,7 +139,7 @@ async def crop_health(f: Field, lookback_days: int = 90, today: date | None = No
         fact("ndvi.cloudy_skipped", "Scenes skipped for cloud over the field", float(cloudy_windows + skipped_scene_cloud), "scenes", src),
     ]
     if failed:
-        notes.append(f"{failed} scene reads failed or timed out.")
+        notes.append(f"{failed} scene reads failed or timed out ({', '.join(sorted(kinds))}).")
     if not clear:
         notes.append(f"No cloud-free view of this field in the last {lookback_days} days.")
         return ToolResult("get_crop_health", "unavailable" if not scenes else "partial", tried, facts, notes,
