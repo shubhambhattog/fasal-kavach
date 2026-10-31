@@ -22,7 +22,7 @@ from .engine import Signal
 from .evidence import Field
 from .tools import Context
 
-PROMPT_VERSION = "2026-11-01.2"  # .2: reference thresholds added to tool notes
+PROMPT_VERSION = "2026-11-01.3"  # .2: reference thresholds in tool notes; .3: final dry-down rule (engine + note)
 SYSTEM = (Path(__file__).parent / "prompts" / "system.md").read_text()
 LANGUAGES = {"en": "English", "hi": "Hindi", "mr": "Marathi", "gu": "Gujarati", "pa": "Punjabi",
              "bn": "Bengali", "ta": "Tamil", "te": "Telugu", "kn": "Kannada"}

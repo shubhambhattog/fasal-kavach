@@ -138,6 +138,15 @@ export const TOOL_LABELS: Record<string, string> = {
   get_water_balance: 'Crop water balance',
 }
 
+const RISK_LOCAL: Record<string, Record<string, string>> = {
+  hi: { heat_stress: 'गर्मी का तनाव', water_deficit: 'पानी की ज़रूरत', heavy_rain: 'भारी बारिश', disease_weather: 'रोग वाला मौसम', vegetation_decline: 'फसल की हरियाली', rain_deficit: 'सामान्य से बारिश', disaster: 'आपदा चेतावनी', market: 'मंडी' },
+  mr: { heat_stress: 'उष्णतेचा ताण', water_deficit: 'पाण्याची गरज', heavy_rain: 'मुसळधार पाऊस', disease_weather: 'रोगास पोषक हवामान', vegetation_decline: 'पिकाची हिरवळ', rain_deficit: 'सरासरीच्या तुलनेत पाऊस', disaster: 'आपत्ती इशारा', market: 'बाजार' },
+}
+
+export function riskLabel(type: string, lang: string): string {
+  return RISK_LOCAL[lang]?.[type] ?? RISK_LABELS[type] ?? type
+}
+
 export const RISK_LABELS: Record<string, string> = {
   heat_stress: 'Heat stress',
   water_deficit: 'Water need',

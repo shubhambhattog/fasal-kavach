@@ -55,7 +55,7 @@ async def run_case(case, model):
     return {"name": name, "lang": lang, "place": f"{place['district']}, {place['state']}", "tools": tools, "stats": stats, "adv": adv}
 
 
-async def main(model):
+async def main(model, label):
     started = time.time()
     results = []
     for case in CASES:
@@ -77,7 +77,7 @@ async def main(model):
     lines = [
         "# Evaluation",
         "",
-        f"Run on {date.today().isoformat()} with `{model}` against **live** data (no mocks, no fixtures), "
+        f"Run on {date.today().isoformat()} with `{model}` (prompt {agent.PROMPT_VERSION}) against **live** data (no mocks, no fixtures), "
         f"{n} cases in 10 states and 8 languages. Total wall time {round(time.time() - started)} s.",
         "",
         "These numbers describe how the agent and gate behaved on that day's real data. They aren't an accuracy "
@@ -106,10 +106,13 @@ async def main(model):
         lines.append(f"| {r['name']} | {r['lang']} | {', '.join(r['tools'])} | {'yes' if s.get('first_pass') else 'no'} | {s.get('repairs')} | "
                      f"{'yes' if s.get('fallback') else 'no'} | {s.get('latency_s')} s | {head} |")
     lines += ["", "Rerun: `cd backend && uv run python ../scripts/eval.py`.", ""]
-    (ROOT / "docs" / "EVAL.md").write_text("\n".join(lines))
-    print("wrote docs/EVAL.md")
+    out = ROOT / "docs" / (f"eval-{label}.md" if label else "EVAL.md")
+    out.write_text("\n".join(lines))
+    print(f"wrote {out.relative_to(ROOT)}")
 
 
 p = argparse.ArgumentParser()
 p.add_argument("--model", default="gemini-3.8-flash")
-asyncio.run(main(p.parse_args().model))
+p.add_argument("--label", default="", help="write docs/eval-<label>.md instead of docs/EVAL.md")
+a = p.parse_args()
+asyncio.run(main(a.model, a.label))

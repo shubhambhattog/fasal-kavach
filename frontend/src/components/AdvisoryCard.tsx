@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react'
 import { speak } from '../api'
-import { RISK_LABELS, SPEECH_LANG, t } from '../i18n'
+import { riskLabel, SPEECH_LANG, t } from '../i18n'
 import type { Advisory, Fact, Level, Signal } from '../types'
 import { SourceChip } from './SourceChip'
 
@@ -63,7 +63,15 @@ export function AdvisoryCard({ advisory, signals, sources, language }: Props) {
       )}
       <header className="flex items-start justify-between gap-4">
         <div className="flex flex-col gap-2">
-          <h2 className="font-serif text-[30px] leading-[1.1] tracking-[-0.5px] text-ink italic sm:text-[36px]">{advisory.headline}</h2>
+          <h2
+            className={
+              /^[\x00-\x7F₹°–—’‘“”…]*$/.test(advisory.headline)
+                ? 'font-serif text-[30px] leading-[1.1] tracking-[-0.5px] text-ink italic sm:text-[36px]'
+                : 'text-[24px] leading-[1.35] font-medium text-ink sm:text-[28px]' /* no fake italics on Indic scripts */
+            }
+          >
+            {advisory.headline}
+          </h2>
           <p className="max-w-[65ch] text-[15px] leading-[24px] text-ink-2">{advisory.summary}</p>
         </div>
         <button
@@ -103,7 +111,7 @@ export function AdvisoryCard({ advisory, signals, sources, language }: Props) {
 
       {advisory.market_advice && (
         <div className="flex flex-col gap-2 rounded-[14px] border border-line p-4">
-          <span className="text-[11px] tracking-[1px] text-ink-3 uppercase">{RISK_LABELS.market}</span>
+          <span className="text-[11px] tracking-[1px] text-ink-3 uppercase">{riskLabel('market', language)}</span>
           <p className="text-[15px] leading-[23px] text-ink-2">{advisory.market_advice}</p>
           <div className="flex flex-wrap gap-1.5">
             {(advisory.market_evidence || []).map((id) => (
@@ -120,7 +128,7 @@ export function AdvisoryCard({ advisory, signals, sources, language }: Props) {
             const sig = signals.find((x) => x.type === r.type)
             return (
               <span key={r.type} title={sig ? `${sig.detail}\nThreshold: ${sig.threshold_source}` : undefined} className={`rounded-full border px-3 py-1.5 text-[12px] ${LEVEL_STYLE[r.level]}`}>
-                {RISK_LABELS[r.type] ?? r.type} · {s.level[r.level]}
+                {riskLabel(r.type, language)} · {s.level[r.level]}
               </span>
             )
           })}
