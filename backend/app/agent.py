@@ -22,7 +22,7 @@ from .engine import Signal
 from .evidence import Field
 from .tools import Context
 
-PROMPT_VERSION = "2026-11-01.1"
+PROMPT_VERSION = "2026-11-01.2"  # .2: reference thresholds added to tool notes
 SYSTEM = (Path(__file__).parent / "prompts" / "system.md").read_text()
 LANGUAGES = {"en": "English", "hi": "Hindi", "mr": "Marathi", "gu": "Gujarati", "pa": "Punjabi",
              "bn": "Bengali", "ta": "Tamil", "te": "Telugu", "kn": "Kannada"}
@@ -198,6 +198,7 @@ async def run(req: Request, today: date | None = None) -> AsyncIterator[dict]:
                 if stats["first_pass"] is None:
                     stats["first_pass"] = verdict.ok
                 stats["gate_problems"] += [p["check"] for p in verdict.problems]
+                stats.setdefault("gate_details", []).extend(p["detail"][:220] for p in verdict.problems)
                 yield _event("gate", ok=verdict.ok, attempt=stats["submissions"], problems=verdict.problems)
                 if verdict.ok:
                     advisory = adv

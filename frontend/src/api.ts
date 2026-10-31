@@ -75,7 +75,7 @@ export async function advise(profile: Profile, question: string, onEvent: (e: Tr
 
 export async function transcribe(blob: Blob, language: string): Promise<string> {
   const form = new FormData()
-  form.append('audio', blob, 'voice.webm')
+  form.append('audio', blob, 'voice.wav')
   form.append('language', language)
   const res = await fetch('/api/transcribe', { method: 'POST', body: form })
   if (!res.ok) throw await errorFrom(res)

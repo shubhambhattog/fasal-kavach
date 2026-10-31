@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react'
 import { transcribe } from '../api'
 import { t } from '../i18n'
+import { toWav16k } from '../wav'
 
 interface Props {
   language: string
@@ -32,7 +33,8 @@ export function AskBox({ language, busy, disabled, onAsk, onStop }: Props) {
         stream.getTracks().forEach((tr) => tr.stop())
         setRec('transcribing')
         try {
-          const said = await transcribe(new Blob(chunks, { type: mr.mimeType || 'audio/webm' }), language)
+          const wav = await toWav16k(new Blob(chunks, { type: mr.mimeType || 'audio/webm' }))
+          const said = await transcribe(wav, language)
           if (said) {
             setText(said)
             if (!busy && !disabled) onAsk(said)

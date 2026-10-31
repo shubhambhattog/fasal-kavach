@@ -52,7 +52,7 @@ Times are targets in IST, starting 2026-10-31 23:50.
 - [x] Edge-case sweep (PRD §3 list), fixing each one
 - [ ] Eval: 12 cases, then `docs/EVAL.md` (first-pass rate, repairs, fallbacks, latency)
 - [ ] Deploy to HF Spaces; smoke test the public URL
-- [ ] P1: watch field and alerts inbox
+- [x] P1: watch fields (engine-only risk scan, sorted by risk) + NDVI map overlay
 
 ## M7: Submission (to 23:00)
 - [x] README: problem, solution, architecture diagram, setup, data sources, what failed first, limits

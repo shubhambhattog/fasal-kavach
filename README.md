@@ -39,6 +39,8 @@ Sakhis, FPO staff and extension workers who advise them.
 | **Traceable** | Every number in the advice is a chip you can click to see the raw value, the provider, the request URL and when it was fetched |
 | **Self-correcting** | A gate rejects invented numbers, unknown citations, hidden risks, undisclosed data gaps, chemical doses and the wrong language, then sends the model a diff to fix. Two repairs at most, then the engine's own advisory ships, clearly labelled |
 | **Honest under failure** | Providers fail over (Open-Meteo → MET Norway; SoilGrids → Open-Meteo soil moisture → NASA POWER). Missing sources are listed and confidence drops. If the LLM itself is down, the engine still answers from the same live data |
+| **See the field** | A one-tap NDVI map of the ~1 km around the pin from the latest clear Sentinel-2 pass: 10 m pixels, clouds removed, laid over the satellite basemap |
+| **Watch many fields** | Save several plots (a family's, or an FPO's members). The rule engine checks each against live data with no AI cost and lists the riskiest first |
 | **Voice** | Speak the question (Gemini transcription) and hear the answer (Gemini TTS, falling back to browser speech) |
 | **Actionable** | e.g. "Irrigate about 19 mm over the next 7 days in 2-3 turns", or "Sell stored onion at Chandwad (₹4,670/q, 23 km) rather than Lasalgaon (₹4,300/q)" |
 
@@ -100,7 +102,9 @@ Prueger 2015.
 ## Tech stack
 
 - **Backend:** Python 3.12, FastAPI, httpx, google-genai (Gemini function calling), rasterio +
-  numpy (COG reads), SQLite TTL cache, pytest (36 offline tests with a scripted fake model)
+  numpy + Pillow (COG reads, NDVI rendering), SQLite TTL cache, pytest (43 offline tests,
+  including a scripted fake model and a guard that fails if the app imports fixtures or ships
+  data files), GitHub Actions CI
 - **Frontend:** React 19, TypeScript, Vite, Tailwind CSS 4, MapLibre GL (Esri imagery), Recharts
 - **Models:** `gemini-3.8-flash` (agent), `gemini-3.5-transcribe` (speech in), `gemini-3.8-flash-tts`
   (speech out); `gemini-3.5-flash-lite` for development

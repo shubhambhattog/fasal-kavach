@@ -159,6 +159,7 @@ async def crop_health(f: Field, lookback_days: int = 90, today: date | None = No
         facts.append(fact("ndvi.change_days", "Days between compared views", float((date.fromisoformat(latest["date"]) - date.fromisoformat(base["date"])).days), "days", cog))
     if latest.get("water_fraction", 0) > 0.5:
         notes.append("The pin looks like open water in the latest view; check the field location.")
+    notes.append("Before maturity, an NDVI drop of 0.10 or more over 3+ weeks signals crop stress (0.20 or more: high).")
     notes.append("NDVI guide: below 0.2 is bare soil or very sparse cover; 0.2-0.4 sparse or young crop; 0.4-0.6 moderate; above 0.6 dense healthy canopy.")
     return ToolResult("get_crop_health", "ok" if not failed else "partial", tried, facts, notes,
                       series={"scenes": sorted(scenes, key=lambda s: s["date"]), "stac_url": src.url})

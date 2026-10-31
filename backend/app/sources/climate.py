@@ -98,6 +98,8 @@ async def rainfall_anomaly(f: Field, today: date | None = None) -> ToolResult:
 
     last_obs = date.fromisoformat(_iso(max(observed)))
     notes.append(f"Observed rain available up to {last_obs.isoformat()} (satellite-model lag about 3 days).")
+    notes.append("IMD categories: departure ≤ −60% large deficient, −59 to −20% deficient, −19 to +19% normal, "
+                 "+20 to +59% excess, ≥ +60% large excess. Windows with a normal under 30 mm are dry-season and not risk-rated.")
     facts = [fact("clim.last_observed_date", "Last observed day", last_obs.isoformat(), "date", obs_src)]
     rows = []
     for key, label, start in windows(f, last_obs):

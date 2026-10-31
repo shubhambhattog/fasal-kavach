@@ -17,14 +17,23 @@ async def transcribe(audio: bytes, mime: str, language: str) -> str:
     lang = LANGUAGES.get(language, "the speaker's language")
     prompt = (f"Transcribe this farmer's voice note exactly, in {lang} using its native script. "
               "Return only the transcript text, with no notes. If there is no speech, return an empty string.")
-    last = None
-    for model in (settings.transcribe_model, settings.cheap_model):
-        try:
-            resp = await asyncio.wait_for(client().aio.models.generate_content(
-                model=model, contents=[types.Part.from_bytes(data=audio, mime_type=mime), prompt]), timeout=30)
-            return (resp.text or "").strip()
-        except Exception as e:
-            last = e
+    audio_part = types.Part.from_bytes(data=audio, mime_type=mime)
+    last: Exception | None = None
+    # 1. The dedicated speech model returns an `audio_transcription` part, not text.
+    try:
+        resp = await asyncio.wait_for(client().aio.models.generate_content(model=settings.transcribe_model, contents=[audio_part]), timeout=30)
+        parts = resp.candidates[0].content.parts or []
+        text = " ".join(p.audio_transcription.text for p in parts if p.audio_transcription and p.audio_transcription.text).strip()
+        if text:
+            return text
+    except Exception as e:
+        last = e
+    # 2. Fallback: a general model asked to transcribe.
+    try:
+        resp = await asyncio.wait_for(client().aio.models.generate_content(model=settings.cheap_model, contents=[audio_part, prompt]), timeout=30)
+        return (resp.text or "").strip()
+    except Exception as e:
+        last = e
     raise LLMUnavailable(f"transcription failed ({type(last).__name__})")
 
 
@@ -39,11 +48,11 @@ def pcm_to_wav(pcm: bytes, rate: int = 24000) -> bytes:
 
 
 async def speak(text: str, language: str) -> bytes:
-    lang = LANGUAGES.get(language, "English")
     try:
         resp = await asyncio.wait_for(client().aio.models.generate_content(
             model=settings.tts_model,
-            contents=f"Read this aloud in {lang}, in a warm, calm, clear voice, like a village extension officer:\n\n{text[:1500]}",
+            # Only the advice text: the TTS model reads instruction prefixes aloud (found in testing).
+            contents=text[:1500],
             config=types.GenerateContentConfig(
                 response_modalities=["AUDIO"],
                 speech_config=types.SpeechConfig(voice_config=types.VoiceConfig(

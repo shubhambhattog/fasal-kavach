@@ -195,6 +195,8 @@ async def forecast(f: Field, days: int = 16) -> ToolResult:
                 notes.append(
                     f"Primary source failed; using MET Norway ({len(rows)} days). ET0 estimated with Hargreaves (FAO-56 eq. 52)."
                 )
+            notes.append("Reference thresholds: IMD heavy rain ≥ 64.5 mm/day, rather heavy ≥ 35.6 mm/day; relative humidity ≥ 85% "
+                         "on 2+ consecutive days favours fungal disease (3-4+ days: high).")
             return build_result(rows, src, tried, notes)
         except SourceError as e:
             notes.append(f"{e.provider} unavailable: {e.message}")
