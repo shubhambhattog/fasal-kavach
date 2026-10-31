@@ -50,7 +50,7 @@ Times are targets in IST, starting 2026-10-31 23:50.
 
 ## M6: Hardening and deploy (to 21:00)
 - [x] Edge-case sweep (PRD §3 list), fixing each one
-- [ ] Eval: 12 cases, then `docs/EVAL.md` (first-pass rate, repairs, fallbacks, latency)
+- [x] Eval: 12 cases (v1 4/12 → v3 10/12 first pass), then `docs/EVAL.md` (first-pass rate, repairs, fallbacks, latency)
 - [ ] Deploy to HF Spaces; smoke test the public URL
 - [x] P1: watch fields (engine-only risk scan, sorted by risk) + NDVI map overlay
 

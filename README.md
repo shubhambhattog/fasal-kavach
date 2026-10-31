@@ -10,6 +10,8 @@ problem, the model fixes it on screen.
 Forge Gen AI Buildathon, **Theme 2: Climate, Resource Infrastructure & Global Supply Resilience**
 (problems 1 and 2 merged: multilingual agri advisory + micro-location climate risk engine).
 
+![Fasal Kavach answering in Marathi for an onion field near Niphad, Nashik: live agent trace, gate check, NDVI overlay and source-chipped advice](docs/img/app-marathi.jpg)
+
 - **Live app:** _added at deployment_
 - **Demo video:** _added at submission_
 - **Deck:** _added at submission_
@@ -137,9 +139,18 @@ records, which the app pages through) and `AGENT_MODEL` to change the model.
 
 ## Evaluation
 
-[docs/EVAL.md](docs/EVAL.md) has a 12-case run across 10 states and 8 languages on live data: gate
-first-pass rate, repairs, fallbacks and latency per case. It measures the agent's behaviour, not
-agronomic accuracy; there's no ground truth for that, and we don't claim one.
+12 real farm locations in 10 states and 8 languages, plus one prompt injection, all on live data
+([docs/EVAL.md](docs/EVAL.md)):
+
+| Run | Change | First pass | Fixed by the model after the gate's diff | Engine fallback |
+|---|---|---|---|---|
+| v1 | Baseline | 4/12 | 8/12 | 0 |
+| v2 | Published IMD / FAO-56 thresholds in tool notes (the engine's verdicts stay private) | 7/12 | 5/12 | 0 |
+| v3 | Engine bug the gate exposed (water need before harvest) + Indic dates in the gate | **10/12** | 2/12 | 0 |
+
+Every advisory shipped grounded: when the model failed, the gate caught it and the model fixed it.
+This measures the agent's behaviour, not agronomic accuracy; there's no ground truth for that, and
+we don't claim one.
 
 ## What failed first
 
