@@ -1,0 +1,15 @@
+# Render blueprint: one free Docker web service. GEMINI_API_KEY is set in the dashboard (sync: false).
+services:
+  - type: web
+    name: fasal-kavach
+    runtime: docker
+    plan: free
+    region: singapore
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /api/health
+    autoDeploy: true
+    envVars:
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: AGENT_MODEL
+        value: gemini-3.8-flash
