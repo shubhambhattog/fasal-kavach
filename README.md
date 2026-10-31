@@ -12,9 +12,9 @@ Forge Gen AI Buildathon, **Theme 2: Climate, Resource Infrastructure & Global Su
 
 ![Fasal Kavach answering in Marathi for an onion field near Niphad, Nashik: live agent trace, gate check, NDVI overlay and source-chipped advice](docs/img/app-marathi.jpg)
 
-- **Live app:** _added at deployment_
+- **Live app:** https://fasal-kavach.onrender.com (free tier: the first load after idle takes about 50 s)
 - **Demo video:** _added at submission_
-- **Deck:** _added at submission_
+- **Deck:** https://gamma.app/docs/5ea2xftoiysvl5r
 
 ---
 
@@ -110,7 +110,7 @@ Prueger 2015.
 - **Frontend:** React 19, TypeScript, Vite, Tailwind CSS 4, MapLibre GL (Esri imagery), Recharts
 - **Models:** `gemini-3.8-flash` (agent), `gemini-3.5-transcribe` (speech in), `gemini-3.8-flash-tts`
   (speech out); `gemini-3.5-flash-lite` for development
-- **Deploy:** one Docker container (FastAPI serves the built React app)
+- **Deploy:** one Docker container (FastAPI serves the built React app) on Render ([`render.yaml`](render.yaml))
 
 ## Run it
 

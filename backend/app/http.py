@@ -108,7 +108,8 @@ async def get_json(
         raise SourceError(provider, "timed out")
     except httpx.HTTPError as e:
         breaker.fail(provider)
-        raise SourceError(provider, f"network error ({type(e).__name__})")
+        detail = str(e).strip()[:90]
+        raise SourceError(provider, f"network error ({type(e).__name__}{': ' + detail if detail else ''})")
 
     if resp.status_code != 200:
         breaker.fail(provider)
