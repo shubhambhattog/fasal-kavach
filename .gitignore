@@ -11,3 +11,4 @@ data/cache/
 *.db
 dist/
 .DS_Store
+data/

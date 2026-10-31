@@ -1,0 +1,12 @@
+import { chromium } from 'playwright-core'
+const browser = await chromium.launch({ channel: 'chrome', args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader'] })
+const page = await browser.newPage({ viewport: { width: 1440, height: 900 } })
+page.on('console', (m) => console.log('console', m.type(), m.text().slice(0, 200)))
+page.on('pageerror', (e) => console.log('PAGE ERROR', e.message))
+page.on('requestfailed', (r) => console.log('FAILED', r.url().slice(0, 120), r.failure()?.errorText))
+await page.addInitScript(() => localStorage.setItem('fasal-kavach.profile.v1', JSON.stringify({ lat: 20.0868, lon: 74.1278, place: 'x', crop: 'onion', sowing_date: '2026-09-15', language: 'en' })))
+await page.goto('http://localhost:8000/', { waitUntil: 'networkidle' })
+await page.waitForTimeout(4000)
+console.log('canvas', await page.evaluate(() => { const c = document.querySelector('canvas'); return c ? [c.width, c.height] : null }))
+await page.screenshot({ path: 'shots/dbg.png' })
+await browser.close()

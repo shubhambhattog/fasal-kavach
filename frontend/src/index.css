@@ -1,0 +1,188 @@
+@import 'tailwindcss';
+@import '@fontsource-variable/geist';
+@import '@fontsource/instrument-serif/400-italic.css';
+@import '@fontsource-variable/jetbrains-mono';
+@import '@fontsource-variable/noto-sans-devanagari';
+@import 'maplibre-gl/dist/maplibre-gl.css';
+
+@theme {
+  --font-sans: 'Geist Variable', 'Noto Sans Devanagari Variable', ui-sans-serif, system-ui, sans-serif;
+  --font-serif: 'Instrument Serif', 'Noto Sans Devanagari Variable', ui-serif, Georgia, serif;
+  --font-mono: 'JetBrains Mono Variable', ui-monospace, monospace;
+
+  --color-page: #101010;
+  --color-ink: #f2f2f2;
+  --color-ink-2: #f2f2f2cc;
+  --color-ink-3: #f2f2f280;
+  --color-ink-4: #f2f2f24d;
+  --color-line: #f2f2f21f;
+  --color-line-2: #f2f2f233;
+  --color-fill: #f2f2f20a;
+  --color-fill-2: #f2f2f214;
+  --color-card: #161616;
+  --color-accent: #9fd67a; /* young-crop green, used sparingly */
+  --color-moderate: #e9b44c;
+  --color-high: #ff6b57;
+
+  --ease-quart: cubic-bezier(0.165, 0.84, 0.44, 1);
+  --ease-quint: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+html,
+body,
+#root {
+  background: var(--color-page);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  min-height: 100%;
+}
+
+h1,
+h2,
+h3 {
+  text-wrap: balance;
+}
+p {
+  text-wrap: pretty;
+}
+.num {
+  font-variant-numeric: tabular-nums;
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-ink);
+  outline-offset: 3px;
+  border-radius: 6px;
+}
+
+/* Frame: translucent shell + inner card, outer radius = inner radius + padding (16 + 8 = 24). */
+.frame {
+  position: relative;
+  padding: 8px;
+  border-radius: 24px;
+  background: var(--color-fill);
+  outline: 1px solid #f2f2f20d;
+  outline-offset: -1px;
+  box-shadow: 0 40px 80px #00000066;
+}
+.card {
+  position: relative;
+  border-radius: 16px;
+  border: 1px solid #2e2e2e;
+  background: linear-gradient(190deg, #1f1f1f, #121212);
+  overflow: hidden;
+}
+.glare {
+  position: absolute;
+  inset: 0 0 auto;
+  height: 1px;
+  z-index: 1;
+  pointer-events: none;
+  background: linear-gradient(to right, #0000 5%, #fff9 35%, #fffc 50%, #fff9 65%, #0000 95%);
+  opacity: 0;
+  animation: fade-in 0.8s var(--ease-quart) 0.5s forwards;
+}
+.top-glow {
+  background: radial-gradient(circle closest-corner at 50% 0, #f2f2f21a, #0000);
+}
+
+.grain {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 50;
+  opacity: 0.18;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+.skeleton {
+  border-radius: 8px;
+  background: linear-gradient(90deg, #1a1a1a 25%, #262626 37%, #1a1a1a 63%);
+  background-size: 400% 100%;
+  animation: skeleton 1.4s ease infinite;
+}
+.shimmer-text {
+  background: linear-gradient(90deg, #f2f2f266 0%, #f2f2f2 50%, #f2f2f266 100%) 0 0 / 200% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: st 2s linear infinite;
+}
+.enter-rise {
+  animation: enter-rise var(--dur, 0.8s) var(--ease-quart) var(--delay, 0s) both;
+}
+.dot-glow {
+  box-shadow: 0 0 14px 1px currentColor;
+}
+
+@keyframes enter-rise {
+  from {
+    opacity: 0;
+    transform: translateY(var(--rise, 16px));
+  }
+}
+@keyframes fade-in {
+  to {
+    opacity: 1;
+  }
+}
+@keyframes skeleton {
+  from {
+    background-position: 100% 50%;
+  }
+  to {
+    background-position: 0 50%;
+  }
+}
+@keyframes st {
+  to {
+    background-position: -200% 0;
+  }
+}
+@keyframes pulse-ring {
+  0% {
+    transform: scale(0.9);
+    opacity: 0.7;
+  }
+  100% {
+    transform: scale(1.6);
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .enter-rise,
+  .glare,
+  .skeleton,
+  .shimmer-text {
+    animation: none !important;
+    opacity: 1;
+  }
+}
+
+/* MapLibre: quiet controls that match the dark UI */
+.maplibregl-ctrl-group {
+  background: #101010cc !important;
+  border: 1px solid var(--color-line-2);
+  box-shadow: none !important;
+}
+.maplibregl-ctrl-group button span {
+  filter: invert(1);
+}
+.maplibregl-ctrl-attrib {
+  background: #101010aa !important;
+  color: var(--color-ink-3);
+  font-size: 10px;
+}
+.maplibregl-ctrl-attrib a {
+  color: var(--color-ink-2);
+}
+
+input[type='date']::-webkit-calendar-picker-indicator {
+  filter: invert(0.8);
+}
+select option {
+  background: #161616;
+}
