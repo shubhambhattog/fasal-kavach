@@ -67,7 +67,8 @@ async def get_water_balance(ctx: Context, days: int = 7, **_) -> ToolResult:
         _calc_fact(f"calc.dry_days_{n}d", f"Dry days (< 2.5 mm), next {n} days", float(wb["dry_days"]), "days"),
     ]
     notes = ["Effective rain counts 80% of days with ≥ 5 mm. 1 mm over 1 acre ≈ 4,047 litres.",
-             "A 7-day shortfall of 12 mm or more is a moderate water need; 25 mm or more is high (moderate at most in the late season)."]
+             "A 7-day shortfall of 12 mm or more is a moderate water need; 25 mm or more is high (moderate at most in the late season). "
+             "Within about 3 weeks of harvest, irrigation is normally stopped, so a shortfall then is not a risk."]
     return ToolResult("get_water_balance", "ok", wx.providers_tried, facts, notes)
 
 

@@ -102,3 +102,15 @@ def test_assess_sorts_high_first():
     sig = engine.assess(store(wx), ONION, crop_stage(ONION, date(2026, 9, 15), T0))
     assert sig[0].level == "high"
     assert by_type(sig)["heat_stress"].evidence[0].startswith("wx.tmax.")
+
+
+def test_no_water_risk_in_final_dry_down():
+    """Found by the gate in eval v2: the engine flagged water need for rice ~20 days before harvest,
+    when irrigation is normally stopped. The model was right to leave it out."""
+    rows = weather_result(et0=4.0, rain=0.0).series["daily"]
+    rice = CROPS["rice"]
+    near_harvest = crop_stage(rice, date(2026, 6, 25), T0)  # 129 DAS of 150
+    assert near_harvest.stage_index == 3 and near_harvest.days_to_harvest <= 21
+    assert engine.water_deficit(rows, near_harvest).level == "low"
+    mid = crop_stage(rice, date(2026, 8, 15), T0)
+    assert engine.water_deficit(rows, mid).level == "high"

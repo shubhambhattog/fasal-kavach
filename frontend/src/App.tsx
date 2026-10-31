@@ -195,11 +195,7 @@ export default function App() {
             ) : (
               !events.length && (
                 <div className="grid gap-3 px-1 sm:grid-cols-3">
-                  {[
-                    ['1', 'Pin your field', 'Advice is for your exact plot, not your district.'],
-                    ['2', 'Ask by voice or text', 'In your language. The agent picks which live data it needs.'],
-                    ['3', 'Every number is checked', 'A gate checks the advice against the raw data before you see it.'],
-                  ].map(([n, h, d]) => (
+                  {s.steps.map(([h, d], i) => [String(i + 1), h, d]).map(([n, h, d]) => (
                     <div key={n} className="flex flex-col gap-1">
                       <span className="font-mono text-[11px] text-ink-4">{n}</span>
                       <span className="text-[14px] text-ink-2">{h}</span>

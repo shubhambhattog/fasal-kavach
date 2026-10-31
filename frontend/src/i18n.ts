@@ -26,6 +26,11 @@ const en = {
   when: { today: 'Today', next_3_days: 'Next 3 days', this_week: 'This week', before_harvest: 'Before harvest' },
   level: { low: 'Low', moderate: 'Moderate', high: 'High' },
   examples: ['What should I do on my field this week?', 'Should I irrigate or spray in the next 3 days?', 'Is my crop healthy? Where should I sell?'],
+  steps: [
+    ['Pin your field', 'Advice is for your exact plot, not your district.'],
+    ['Ask by voice or text', 'In your language. The agent picks which live data it needs.'],
+    ['Every number is checked', 'A gate checks the advice against the raw data before you see it.'],
+  ],
 }
 
 type Strings = typeof en
@@ -58,6 +63,11 @@ const hi: Strings = {
   when: { today: 'आज', next_3_days: 'अगले 3 दिन', this_week: 'इस हफ्ते', before_harvest: 'कटाई से पहले' },
   level: { low: 'कम', moderate: 'मध्यम', high: 'ज़्यादा' },
   examples: ['इस हफ्ते खेत में क्या करूँ?', 'अगले 3 दिन सिंचाई या छिड़काव करूँ?', 'फसल ठीक है? कहाँ बेचूँ?'],
+  steps: [
+    ['खेत पर पिन लगाएँ', 'सलाह आपके अपने खेत के लिए, पूरे ज़िले के लिए नहीं।'],
+    ['बोलकर या लिखकर पूछें', 'अपनी भाषा में। एजेंट खुद तय करता है कि कौन-सा लाइव डेटा चाहिए।'],
+    ['हर आँकड़े की जाँच', 'सलाह दिखाने से पहले हर संख्या असली डेटा से मिलाई जाती है।'],
+  ],
 }
 
 const mr: Strings = {
@@ -88,6 +98,11 @@ const mr: Strings = {
   when: { today: 'आज', next_3_days: 'पुढील 3 दिवस', this_week: 'या आठवड्यात', before_harvest: 'काढणीपूर्वी' },
   level: { low: 'कमी', moderate: 'मध्यम', high: 'जास्त' },
   examples: ['या आठवड्यात शेतात काय करावे?', 'पुढील 3 दिवसांत पाणी द्यावे की फवारणी करावी?', 'पीक निरोगी आहे का? कुठे विकावे?'],
+  steps: [
+    ['शेतावर पिन लावा', 'सल्ला तुमच्या स्वतःच्या शेतासाठी, संपूर्ण जिल्ह्यासाठी नाही.'],
+    ['बोलून किंवा लिहून विचारा', 'तुमच्या भाषेत. कोणती थेट माहिती लागेल ते एजंट ठरवतो.'],
+    ['प्रत्येक आकडा तपासला जातो', 'सल्ला दाखवण्यापूर्वी प्रत्येक संख्या मूळ माहितीशी जुळवली जाते.'],
+  ],
 }
 
 const TABLE: Record<string, Strings> = { en, hi, mr }

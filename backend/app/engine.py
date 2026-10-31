@@ -18,6 +18,7 @@ IMD_DEPARTURE = "IMD seasonal departure categories (deficient ≤ −20%, large 
 DISEASE_SRC = "heuristic: RH ≥ 85% on consecutive days favours fungal diseases (blight, blast, mildew)"
 NDVI_SRC = "heuristic: NDVI drop ≥ 0.10 over 3+ weeks before maturity signals crop stress"
 GDACS_SRC = "GDACS alert levels (Green/Orange/Red)"
+FINAL_DRY_DOWN_DAYS = 21  # last irrigation is usually 2-3 weeks before harvest
 
 
 @dataclass
@@ -85,14 +86,21 @@ def water_deficit(rows: list[dict], stage: StageInfo | None) -> Signal | None:
     if not wb:
         return None
     level = "high" if wb["deficit"] >= 25 else ("moderate" if wb["deficit"] >= 12 else "low")
-    if stage.stage_index == 3 and level == "high":
+    detail_extra, action = "", f"Plan about {wb['deficit']:g} mm of irrigation over the next {wb['days']} days, split into 2-3 waterings (more often on sandy soil)."
+    if stage.stage_index == 3 and stage.days_to_harvest is not None and stage.days_to_harvest <= FINAL_DRY_DOWN_DAYS:
+        # Irrigation is normally stopped 2-3 weeks before harvest so the crop dries down (FAO-56 §6 late season;
+        # ICAR package of practices). A shortfall now is expected, not a risk.
+        level = "low"
+        detail_extra = f" The crop is about {stage.days_to_harvest} days from harvest, when irrigation is normally stopped."
+        action = "Stop irrigating as harvest nears so the crop dries down evenly."
+    elif stage.stage_index == 3 and level == "high":
         level = "moderate"  # late season: water need is falling and some stress is acceptable before harvest
     ev = [f"wx.et0.{d}" for d in wb["dates"]] + [f"wx.rain.{d}" for d in wb["dates"]]
     return Signal(
         "water_deficit", level, "Crop water need",
         f"Next {wb['days']} days: crop uses about {wb['crop_et']:g} mm (ET0 × Kc {stage.kc:g}); effective rain {wb['effective_rain']:g} mm; "
-        f"shortfall {wb['deficit']:g} mm. {wb['dry_days']} dry days.",
-        f"Plan about {wb['deficit']:g} mm of irrigation over the next {wb['days']} days, split into 2-3 waterings (more often on sandy soil).",
+        f"shortfall {wb['deficit']:g} mm. {wb['dry_days']} dry days.{detail_extra}",
+        action,
         ev, {k: wb[k] for k in ("crop_et", "effective_rain", "deficit", "dry_days")}, FAO56,
     )
 
