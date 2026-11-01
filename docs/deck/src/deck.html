@@ -25,6 +25,13 @@
     content: ''; position: absolute; inset: 0; pointer-events: none; opacity: .16; mix-blend-mode: overlay;
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
   }
+  /* The blended grain forces Chrome to rasterise whole pages in print (24 MB PDF), so screen only. */
+  /* PDF viewers render large blurred shadows as hard blocks, so drop them (and the grain) in print. */
+  @media print {
+    .slide::after { display: none; }
+    .frame, .dot, [style*="box-shadow"] { box-shadow: none !important; }
+    .frame { outline-color: #f2f2f21f; }
+  }
   .eyebrow { font-family: 'Mono'; font-size: 18px; letter-spacing: 3px; text-transform: uppercase; color: var(--ink3); }
   .eyebrow b { color: var(--accent); font-weight: 400; }
   h1 { font-size: 64px; line-height: 1.05; letter-spacing: -2px; font-weight: 500; text-wrap: balance; }
@@ -64,7 +71,7 @@
   </div>
   <div class="frame" style="width: 720px; flex-shrink: 0;">
     <span class="glare"></span>
-    <img src="assets/mapcard.png" style="width: 100%;" />
+    <img src="assets/mapcard.jpg" style="width: 100%;" />
   </div>
   <div class="footer"><span>Shubham Bhatt · NIT Delhi · solo build</span><span>01 / 07</span></div>
 </section>
@@ -124,7 +131,7 @@
   </div>
   <div class="frame" style="width: 800px; flex-shrink: 0;">
     <span class="glare"></span>
-    <img src="assets/advice.png" style="width: 100%;" />
+    <img src="assets/advice.jpg" style="width: 100%;" />
   </div>
   <div class="footer"><span>Fasal Kavach</span><span>03 / 07</span></div>
 </section>
@@ -206,7 +213,7 @@
 <section class="slide" style="flex-direction: row; gap: 80px; align-items: center;">
   <div class="frame" style="width: 780px; flex-shrink: 0;">
     <span class="glare"></span>
-    <img src="assets/trace-repair.png" style="width: 100%;" />
+    <img src="assets/trace-repair.jpg" style="width: 100%;" />
   </div>
   <div style="flex: 1; display: flex; flex-direction: column; gap: 40px;">
     <div style="display: flex; flex-direction: column; gap: 22px;">
@@ -241,7 +248,7 @@
       <div style="font-size: 19px; line-height: 1.5; color: var(--ink3);">Real Sentinel-2 NDVI around the pin, 30 Oct 2026: every 10 m pixel, clouds masked, field boundaries visible.</div>
     </div>
     <div style="display: flex; flex-direction: column; gap: 28px;">
-      <div class="frame"><span class="glare"></span><img src="assets/panels.png" style="width: 100%;" /></div>
+      <div class="frame"><span class="glare"></span><img src="assets/panels.jpg" style="width: 100%;" /></div>
       <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 22px;">
         <div><div style="font-size: 24px; font-weight: 500;">Voice in &amp; out</div><div style="font-size: 18px; line-height: 1.45; color: var(--ink3); margin-top: 8px;">Gemini transcribe + TTS, browser fallback. 9 languages.</div></div>
         <div><div style="font-size: 24px; font-weight: 500;">Honest under failure</div><div style="font-size: 18px; line-height: 1.45; color: var(--ink3); margin-top: 8px;">Fallback chains, disclosed gaps, and the engine still answers if the AI is down.</div></div>
